@@ -19,6 +19,7 @@ namespace RememberPassword
 			0x70, 0x65, 0x69, 0x6f, 0x47, 0x69, 0x4b, 0x75, 0x71, 0x45, 0x33, 0x65, 0x50, 0x52
 		};
 		private const string PASSWORD_FILENAME = "/password.txt";
+		private LoginWrapper login;
 
 		public RememberPassword()
 		{
@@ -41,6 +42,7 @@ namespace RememberPassword
 				return new MethodDefinition[] {
 					scrollsTypes["Login"].Methods.GetMethod("loadSettings")[0],
 					scrollsTypes["Login"].Methods.GetMethod("saveSettings")[0],
+					scrollsTypes["ApplicationController"].Methods.GetMethod("compareVersions", new Type[] { typeof(int) })
 				};
 			} 
 			catch
@@ -57,23 +59,29 @@ namespace RememberPassword
 
 		public override void AfterInvoke(InvocationInfo info, ref object returnValue)
 		{
+			if (info.targetMethod == "compareVersions") {
+				if (login != null) {
+					login.Login();
+					return;
+				}
+			}
+
 			var filename = Application.persistentDataPath + PASSWORD_FILENAME;
 
 			if (info.targetMethod.Equals("loadSettings")) {
-				LoginWrapper login = new LoginWrapper((Login) info.target);
+				login = new LoginWrapper((Login) info.target);
 
 				if (login.RememberMeChecked) {
 					var fileContent = FileUtils.ReadFileContent(filename);
 					if (!string.IsNullOrEmpty(fileContent)) {
 						var bytes = fileContent.HexToBytes();
 						login.Password = AesCryptoServiceHelper.DecryptStringFromBytes(bytes, KEY, IV);
-						//login.Login(); // connection fails for some unknown reason
 					}
 				}
 			}
 
 			if (info.targetMethod.Equals("saveSettings")) {
-				LoginWrapper login = new LoginWrapper((Login) info.target);
+				login = new LoginWrapper((Login) info.target);
 
 				if (login.RememberMeChecked) {
 					if (!string.IsNullOrEmpty(login.Password)) {
