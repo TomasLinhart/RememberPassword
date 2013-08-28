@@ -51,10 +51,8 @@ namespace RememberPassword
 			}
 		}
 
-		public override bool BeforeInvoke(InvocationInfo info, out object returnValue)
+		public override void BeforeInvoke(InvocationInfo info)
 		{
-			returnValue = null;
-			return false;
 		}
 
 		public override void AfterInvoke(InvocationInfo info, ref object returnValue)
